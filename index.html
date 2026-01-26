@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Detector Visualization Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- P5.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Metal Detector Training Simulator</h1>
+            <p class="subtitle">Move your mouse to simulate detector movement</p>
+        </header>
+        
+        <main>
+            <div id="canvas-container">
+                <!-- P5.js canvas will be inserted here -->
+            </div>
+            
+            <div class="instructions">
+                <h3>Instructions</h3>
+                <ul>
+                    <li>Move your mouse over the canvas to simulate detector movement</li>
+                    <li>Watch for colored areas indicating metal objects</li>
+                    <li><strong>Red/Yellow = Strong signal (near objects)</strong></li>
+                    <li><strong>Blue/Cyan = Weak signal (far from objects)</strong></li>
+                </ul>
+                <div style="margin-top: 20px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;">
+                    <strong>Keyboard Shortcuts:</strong><br>
+                    <code>R</code> - Reset | 
+                    <code>D</code> - Show Objects | 
+                    <code>M</code> - Toggle Mode<br>
+                    <small style="opacity: 0.8;">Mode: Permanent map (shows object locations) vs Fading map (shows recent path)</small>
+                </div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <a href="debug.html" style="color: #fff; text-decoration: none; padding: 8px 15px; background: rgba(255,255,255,0.2); border-radius: 5px; display: inline-block;">
+                        🔍 Debug Mode
+                    </a>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Build for Ukraine Spring 2025 | MIT</p>
+        </footer>
+    </div>
+    
+    <!-- Load main sketch (which imports the modules) -->
+    <script type="module" src="sketch.js"></script>
+</body>
+</html>

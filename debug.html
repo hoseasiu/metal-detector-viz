@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metal Detector - Debug Mode</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            min-width: 250px;
+            z-index: 1000;
+        }
+        #debug-panel h4 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+        }
+        .debug-row {
+            margin: 5px 0;
+        }
+        .debug-label {
+            display: inline-block;
+            width: 120px;
+        }
+        .debug-value {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        .signal-bar {
+            height: 20px;
+            background: #333;
+            margin: 5px 0;
+            position: relative;
+        }
+        .signal-fill {
+            height: 100%;
+            transition: width 0.1s;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Metal Detector - Debug Mode 🔍</h1>
+            <p class="subtitle">Shows real-time signal values and heat map data</p>
+        </header>
+        
+        <main>
+            <div id="canvas-container">
+                <!-- P5.js canvas will be inserted here -->
+            </div>
+            
+            <div class="instructions">
+                <h3>Debug Controls</h3>
+                <ul>
+                    <li><strong>R</strong> - Reset heat map</li>
+                    <li><strong>D</strong> - Toggle object markers</li>
+                    <li><strong>G</strong> - Toggle grid overlay</li>
+                    <li><strong>V</strong> - Toggle value display</li>
+                    <li><strong>ESC</strong> - Go to normal mode</li>
+                </ul>
+                <p style="margin-top: 20px; color: #666;">
+                    Move mouse over canvas to see signal strength values in real-time.
+                </p>
+            </div>
+        </main>
+    </div>
+    
+    <div id="debug-panel">
+        <h4>📊 Real-Time Signals</h4>
+        <div class="debug-row">
+            <span class="debug-label">Position:</span>
+            <span class="debug-value" id="pos-value">(0, 0)</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Signal Strength:</span>
+            <span class="debug-value" id="strength-value">0</span>
+        </div>
+        <div class="signal-bar">
+            <div class="signal-fill" id="strength-bar" style="width: 0%; background: linear-gradient(90deg, blue, cyan, yellow, red);"></div>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Frequency:</span>
+            <span class="debug-value" id="freq-value">0 Hz</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Closest Object:</span>
+            <span class="debug-value" id="object-value">None</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Distance:</span>
+            <span class="debug-value" id="distance-value">-</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Grid Cell:</span>
+            <span class="debug-value" id="grid-value">(0, 0)</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Heat Map Value:</span>
+            <span class="debug-value" id="heatmap-value">0</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">Max in Grid:</span>
+            <span class="debug-value" id="max-value">0</span>
+        </div>
+        <div class="debug-row">
+            <span class="debug-label">FPS:</span>
+            <span class="debug-value" id="fps-value">60</span>
+        </div>
+    </div>
+    
+    <script type="module" src="sketch.js"></script>
+    <script type="module">
+        import { GRID } from './js/config.js';
+        
+        // Make debug update available globally
+        window.updateDebugPanel = function(data) {
+            document.getElementById('pos-value').textContent = `(${data.x}, ${data.y})`;
+            document.getElementById('strength-value').textContent = data.strength.toFixed(2);
+            document.getElementById('strength-bar').style.width = data.strength + '%';
+            document.getElementById('freq-value').textContent = data.frequency.toFixed(0) + ' Hz';
+            document.getElementById('object-value').textContent = data.objectName || 'None';
+            document.getElementById('distance-value').textContent = data.distance !== Infinity ? data.distance.toFixed(1) + ' px' : '-';
+            
+            const gridX = Math.floor(data.x / 10);
+            const gridY = Math.floor(data.y / 10);
+            document.getElementById('grid-value').textContent = `(${gridX}, ${gridY})`;
+            document.getElementById('heatmap-value').textContent = data.heatMapValue.toFixed(2);
+            document.getElementById('max-value').textContent = data.maxValue.toFixed(2);
+            document.getElementById('fps-value').textContent = data.fps.toFixed(1);
+        };
+    </script>
+</body>
+</html>
