@@ -5,6 +5,7 @@
  */
 
 import { BURIED_OBJECTS, SIGNAL } from './config.js';
+import { getMetalType, calculateVDI, calculatePhase, calculateAudioFrequency } from './MetalTypes.js';
 
 export class DetectorSimulator {
     constructor() {
@@ -15,7 +16,7 @@ export class DetectorSimulator {
      * Get signal at a specific position
      * @param {number} x - X coordinate
      * @param {number} y - Y coordinate
-     * @returns {Object} Signal data { strength, frequency, closestObject }
+     * @returns {Object} Signal data { strength, frequency, metalType, vdi, phase, closestObject }
      */
     getSignal(x, y) {
         let maxStrength = 0;
@@ -40,13 +41,30 @@ export class DetectorSimulator {
             }
         }
         
-        // Calculate frequency based on signal strength
-        // Stronger signals = higher frequency
-        const frequency = this.calculateFrequency(maxStrength);
+        // If we detected something, get its metal type properties
+        let metalType = null;
+        let vdi = 0;
+        let phase = 0;
+        let audioFreq = 0;
+        
+        if (closestObject) {
+            // Get metal type object from the buried object's metalType string
+            metalType = getMetalType(closestObject.metalType);
+            
+            // Calculate VDI and phase based on metal type
+            vdi = calculateVDI(metalType);
+            phase = calculatePhase(metalType);
+            
+            // Calculate audio frequency based on metal type and signal strength
+            audioFreq = calculateAudioFrequency(metalType, maxStrength);
+        }
         
         return {
             strength: maxStrength,
-            frequency: frequency,
+            frequency: audioFreq,
+            metalType: metalType,
+            vdi: vdi,
+            phase: phase,
             closestObject: closestObject,
             distance: closestDistance
         };

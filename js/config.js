@@ -44,31 +44,36 @@ export const BURIED_OBJECTS = [
         x: 200,
         y: 150,
         strength: 90,
-        name: 'Large Metal Object'
+        metalType: 'SILVER',  // High conductor
+        name: 'Silver Coin'
     },
     {
         x: 450,
         y: 300,
         strength: 70,
-        name: 'Medium Metal Object'
+        metalType: 'COPPER',  // Medium-high conductor
+        name: 'Copper Pipe'
     },
     {
         x: 600,
         y: 180,
         strength: 50,
-        name: 'Small Metal Object'
+        metalType: 'ALUMINUM',  // Medium conductor
+        name: 'Aluminum Can'
     },
     {
         x: 250,
         y: 450,
         strength: 85,
-        name: 'Large Shallow Object'
+        metalType: 'IRON',  // Low conductor (ferrous)
+        name: 'Iron Fragment'
     },
     {
         x: 650,
         y: 450,
         strength: 40,
-        name: 'Deep Small Object'
+        metalType: 'COPPER',  // Medium-high conductor
+        name: 'Small Copper Object'
     }
 ];
 
@@ -103,5 +108,6 @@ export const DEBUG = {
     SHOW_GRID: false,
     SHOW_OBJECT_LOCATIONS: false,  // Set to true to see actual buried objects
     SHOW_FPS: false,
+    SHOW_VALUES: false,  // Show VDI, phase, etc. on screen
     LOG_SIGNALS: false
 };

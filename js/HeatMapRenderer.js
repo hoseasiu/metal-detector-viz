@@ -2,9 +2,11 @@
  * HeatMapRenderer
  * Renders the heat map layer showing signal intensity
  * Maintains a 2D grid of signal values that decay over time
+ * Now includes metal type discrimination for color coding
  */
 
 import { GRID, SIGNAL, COLORS, ACTIVE_COLOR_SCHEME, CANVAS } from './config.js';
+import { getColorForSignal } from './MetalTypes.js';
 
 export class HeatMapRenderer {
     constructor(p5Instance) {
@@ -12,14 +14,20 @@ export class HeatMapRenderer {
         
         // Create 2D grid to store signal values
         this.grid = [];
+        // Create separate grid to store metal type information
+        this.metalTypeGrid = [];
+        
         for (let i = 0; i < GRID.COLS; i++) {
             this.grid[i] = [];
+            this.metalTypeGrid[i] = [];
             for (let j = 0; j < GRID.ROWS; j++) {
                 this.grid[i][j] = 0;
+                this.metalTypeGrid[i][j] = null;
             }
         }
         
         this.colorScheme = COLORS[ACTIVE_COLOR_SCHEME];
+        this.useMetalTypeColors = true;  // Toggle for metal type coloring
     }
     
     /**
@@ -29,8 +37,9 @@ export class HeatMapRenderer {
      * @param {number} x - X coordinate
      * @param {number} y - Y coordinate
      * @param {number} strength - Signal strength (0-100)
+     * @param {Object} metalType - Metal type object (optional)
      */
-    update(x, y, strength) {
+    update(x, y, strength, metalType = null) {
         // Only paint strong signals - combined with steep falloff, this creates localized hotspots
         const SIGNAL_THRESHOLD = 30; // Only paint meaningful signals
         if (strength < SIGNAL_THRESHOLD) {
@@ -70,7 +79,13 @@ export class HeatMapRenderer {
                 const adjustedStrength = strength * falloff;
                 
                 // Update grid cell - take maximum of current value or new signal
-                this.grid[targetX][targetY] = Math.max(this.grid[targetX][targetY], adjustedStrength);
+                if (adjustedStrength > this.grid[targetX][targetY]) {
+                    this.grid[targetX][targetY] = adjustedStrength;
+                    // Store metal type for this cell
+                    if (metalType) {
+                        this.metalTypeGrid[targetX][targetY] = metalType;
+                    }
+                }
             }
         }
     }
@@ -112,7 +127,8 @@ export class HeatMapRenderer {
                 
                 // Only draw if signal is strong enough to be visible
                 if (value > MIN_VISIBLE_VALUE) {
-                    const color = this.getColorForValue(value);
+                    const metalType = this.metalTypeGrid[i][j];
+                    const color = this.getColorForValue(value, metalType);
                     this.p.fill(color[0], color[1], color[2], this.getAlphaForValue(value));
                     
                     // Draw as circle for smoother appearance
@@ -127,11 +143,18 @@ export class HeatMapRenderer {
     }
     
     /**
-     * Get color for a signal value based on active color scheme
+     * Get color for a signal value based on metal type or color scheme
      * @param {number} value - Signal strength (0-100)
+     * @param {Object} metalType - Metal type object (optional)
      * @returns {Array} RGB color array [r, g, b]
      */
-    getColorForValue(value) {
+    getColorForValue(value, metalType = null) {
+        // If we have metal type info and metal type coloring is enabled, use it
+        if (this.useMetalTypeColors && metalType) {
+            return getColorForSignal(metalType, value);
+        }
+        
+        // Otherwise fall back to thermal/simple color scheme
         const normalized = value / SIGNAL.MAX_STRENGTH;
         
         if (ACTIVE_COLOR_SCHEME === 'THERMAL') {
@@ -203,8 +226,17 @@ export class HeatMapRenderer {
         for (let i = 0; i < GRID.COLS; i++) {
             for (let j = 0; j < GRID.ROWS; j++) {
                 this.grid[i][j] = 0;
+                this.metalTypeGrid[i][j] = null;
             }
         }
+    }
+    
+    /**
+     * Toggle metal type coloring on/off
+     * @param {boolean} enabled - Whether to use metal type colors
+     */
+    setMetalTypeColors(enabled) {
+        this.useMetalTypeColors = enabled;
     }
     
     /**
