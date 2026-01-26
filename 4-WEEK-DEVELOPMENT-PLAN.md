@@ -1,7 +1,7 @@
 # Metal Detector Visualization - 4-Week Development Plan
 
 **Project:** Interactive Metal Detector Training Simulator  
-**Course:** Build for Ukraine Spring 2025, MIT  
+**Course:** Build for Ukraine 2026  
 **Timeline:** 4 weeks, iterative development  
 **Tech Stack:** P5.js, HTML5, CSS3, ES6 JavaScript, Web Audio API  
 **Deployment:** GitHub Pages  

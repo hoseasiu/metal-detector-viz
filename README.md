@@ -1,6 +1,6 @@
 # Metal Detector Visualization - Training Simulator
 
-An interactive web-based metal detector training simulator built with P5.js for the Build for Ukraine Spring 2025 course at MIT.
+An interactive web-based metal detector training simulator built with P5.js for the Build for Ukraine 2026 course at MIT.
 
 ## Current Status: Week 2 Complete ✅
 
@@ -168,7 +168,7 @@ Enhanced signal output:
 
 ## Educational Purpose
 
-This simulator is being developed for the **Build for Ukraine Spring 2025** course at MIT to help students understand:
+This simulator is being developed for the **Build for Ukraine 2026** course at MIT to help students understand:
 - Metal detector physics and operation
 - Signal processing concepts
 - Electromagnetic induction
@@ -187,7 +187,7 @@ This is a course project for MIT's Build for Ukraine. Feedback and suggestions a
 
 ## License
 
-Educational use for MIT Build for Ukraine Spring 2025.
+Educational use for MIT Build for Ukraine 2026.
 
 ## Acknowledgments
 
