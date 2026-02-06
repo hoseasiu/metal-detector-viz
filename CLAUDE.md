@@ -81,10 +81,81 @@ The project follows a 4-week iterative development plan (see `4-WEEK-DEVELOPMENT
 
 - **Week 1 (✅ Complete)**: Core heat map + detector position
 - **Week 2 (✅ Complete)**: Metal type discrimination + coverage tracking + legend
-- **Week 3 (Planned)**: Metrics panel + signal analysis + audio integration (Web Audio API)
-- **Week 4 (Planned)**: Training scenarios + scoring system + ground truth visualization
+- **Week 3 (✅ Complete)**: Metrics panel + signal analysis + audio integration (Web Audio API)
+- **Week 4 (✅ Complete)**: Training scenarios + scoring system + ground truth visualization + UI controls
 
-## Audio Feature (Planned for Week 3)
+**All features complete!** The simulator is ready for deployment and use.
+
+## Week 4 Features (Training System)
+
+### Scenario System
+The `ScenarioManager.js` manages 5 built-in training scenarios:
+- **Beginner Training**: Single silver coin, 3-minute time limit
+- **Intermediate Search**: 4 targets with overlap, 5-minute limit
+- **Advanced Challenge**: 7 targets including iron trash, 7-minute limit
+- **Treasure Hunt**: 6 valuable targets scattered, 6-minute limit
+- **Free Practice**: No time limit or scoring
+
+Scenarios are defined in-code (no external JSON files) and include:
+- Object placements with metal types
+- Time limits (optional)
+- Passing scores (optional)
+- Difficulty ratings
+- Tips for users
+
+### Scoring System
+`ScoringSystem.js` tracks comprehensive performance metrics:
+
+**Score Components (weighted):**
+- Target Score (40%): Percentage of targets found, bonus for valuable targets
+- Coverage Score (20%): Percentage of area searched
+- Technique Score (20%): Based on sweep speed and pattern analysis
+- Efficiency Score (10%): Coverage per unit time
+- Time Bonus (10%): Faster completion = higher bonus
+
+**Final Score:** 0-100 scale with letter grades (A+ to F)
+
+**Tracking:**
+- Targets found (total, valuable, trash)
+- Time elapsed/remaining
+- Coverage percentage
+- Technique metrics from TechniqueAnalyzer
+- Signal confidence from SignalAnalyzer
+
+### Ground Truth Visualization
+`GroundTruth.js` provides toggle-able overlay showing actual object locations:
+- Color-coded X markers and circles for each metal type
+- Green checkmarks for found targets
+- Object labels (name, metal type, strength)
+- Optional detection range circles (150px radius)
+- Interactive legend
+- 'T' key or button to toggle visibility
+
+### UI Control System
+`UIControls.js` creates DOM elements for scenario management:
+
+**Top Control Bar:**
+- Scenario selector dropdown
+- Reset button
+- Ground truth toggle button
+- Help button
+
+**Bottom Status Bar:**
+- Scenario name
+- Targets found counter
+- Current score
+- Time display (elapsed or remaining)
+- Finish button (for manual completion)
+- Export results button
+
+**Score Modal:**
+- Displayed at scenario end
+- Shows final score, grade, pass/fail status
+- Detailed performance breakdown
+- Retry, next scenario, or export options
+- Animated transitions
+
+## Audio Feature (Week 3)
 
 When implementing the audio system (`AudioEngine.js`), **mimic real metal detector behavior** (Garrett AT Pro, Minelab Equinox style):
 

@@ -2,7 +2,41 @@
 
 An interactive web-based metal detector training simulator built with P5.js for the Build for Ukraine 2026 course at MIT.
 
-## Current Status: Week 3 Complete ✅
+## Current Status: Week 4 Complete ✅ - Full Training System
+
+### Week 4 Features (Training Scenarios + Scoring System + Ground Truth)
+- **Scenario Manager**: Pre-built training scenarios with different difficulty levels
+  - Beginner Training: Single target, no clutter (VDI: 80-99)
+  - Intermediate Search: 4 targets with overlap
+  - Advanced Challenge: 7 targets including trash (iron)
+  - Treasure Hunt: 6 valuable targets scattered
+  - Free Practice: No time limit or scoring
+- **Scoring System**: Comprehensive performance tracking
+  - Target tracking (found/total, valuable vs trash)
+  - Coverage percentage and search efficiency
+  - Technique scoring (sweep speed, pattern, efficiency)
+  - Time tracking with optional time limits
+  - Final score calculation (0-100) with letter grades (A+ to F)
+  - Passing/failing determination based on scenario requirements
+- **Ground Truth Visualization**: Toggle to see actual buried object locations
+  - Color-coded markers for each metal type
+  - Visual indicators for found vs undiscovered targets
+  - Detection range circles (optional)
+  - Object labels with metal type and strength
+  - Interactive legend explaining markers
+- **UI Controls**: Top control bar and bottom status bar
+  - Scenario selector dropdown
+  - Reset and ground truth toggle buttons
+  - Help modal with tips
+  - Real-time status: targets found, score, time remaining
+  - Finish button for manual scenario completion
+  - Export results to JSON
+- **Score Modal**: End-of-scenario performance report
+  - Large final score and letter grade display
+  - Pass/fail status with visual feedback
+  - Detailed breakdown (targets, coverage, technique, efficiency, time)
+  - Retry scenario, next scenario, or export results options
+  - Animated transitions and professional design
 
 ### Week 3 Features (Audio Engine + Metrics Panel + Signal Analysis)
 - **Realistic Audio Engine**: Mimics actual metal detector beeping behavior
@@ -61,16 +95,24 @@ An interactive web-based metal detector training simulator built with P5.js for 
 
 ### Controls
 - **Mouse**: Move detector around the canvas
+- **T**: Toggle ground truth (show/hide actual object locations)
 - **A**: Toggle audio on/off (or use button in metrics panel)
-- **R**: Reset heat map, coverage, and all analyzers
+- **R**: Reset scenario (reloads current scenario from beginning)
 - **L**: Toggle legend visibility
-- **D**: Toggle debug mode (show buried object locations)
 - **M**: Toggle heat map mode (fading vs permanent)
 - **C**: Toggle metal type colors on/off
 - **F**: Toggle FPS display
 - **G**: Toggle grid overlay
 - **V**: Toggle value display
 - **Space**: Clear detector trail
+
+**UI Controls:**
+- **Scenario Selector**: Choose from 5 different training scenarios
+- **Reset Button**: Restart current scenario
+- **Show/Hide Objects Button**: Toggle ground truth visualization
+- **Help Button**: View tips and keyboard shortcuts
+- **Finish Button**: Manually complete scenario (appears during timed scenarios)
+- **Export Button**: Save results as JSON file
 
 ## Features
 
@@ -102,6 +144,7 @@ metal-detector-viz/
 ├── styles.css
 ├── sketch.js                    # Main P5.js sketch
 ├── README.md
+├── CLAUDE.md                    # Claude Code guidance
 ├── 4-WEEK-DEVELOPMENT-PLAN.md
 └── js/
     ├── config.js                # Settings and constants
@@ -111,13 +154,58 @@ metal-detector-viz/
     ├── MetalTypes.js            # Metal type definitions
     ├── CoverageRenderer.js      # Coverage tracking
     ├── Legend.js                # Legend UI
-    ├── AudioEngine.js           # ✨ NEW: Realistic beeping audio
-    ├── MetricsPanel.js          # ✨ NEW: Real-time readings panel
-    ├── SignalAnalyzer.js        # ✨ NEW: Signal quality analysis
-    └── TechniqueAnalyzer.js     # ✨ NEW: Technique feedback
+    ├── AudioEngine.js           # Week 3: Realistic beeping audio
+    ├── MetricsPanel.js          # Week 3: Real-time readings panel
+    ├── SignalAnalyzer.js        # Week 3: Signal quality analysis
+    ├── TechniqueAnalyzer.js     # Week 3: Technique feedback
+    ├── ScenarioManager.js       # ✨ NEW: Training scenario management
+    ├── ScoringSystem.js         # ✨ NEW: Performance scoring
+    ├── GroundTruth.js           # ✨ NEW: Object location visualization
+    └── UIControls.js            # ✨ NEW: UI control management
 ```
 
 ### Key Components
+
+#### ScenarioManager.js (Week 4)
+Manages training scenarios with built-in difficulty levels:
+- 5 pre-configured scenarios (beginner to advanced)
+- Configures buried objects, time limits, and passing scores
+- Tracks valuable targets vs trash targets
+- Provides scenario tips and descriptions
+- No external JSON loading - all scenarios built-in
+
+#### ScoringSystem.js (Week 4)
+Comprehensive performance tracking:
+- Target tracking (found/missed, valuable/trash)
+- Coverage percentage and search efficiency calculation
+- Technique scoring based on sweep speed and pattern
+- Time tracking with bonuses for speed
+- Final score calculation (0-100) with weighted components:
+  - Target score: 40%
+  - Coverage: 20%
+  - Technique: 20%
+  - Efficiency: 10%
+  - Time bonus: 10%
+- Letter grade assignment (A+ to F)
+- JSON export functionality
+
+#### GroundTruth.js (Week 4)
+Visual overlay showing actual object locations:
+- Color-coded markers by metal type
+- Found vs undiscovered indicator (checkmark for found)
+- Optional detection range circles
+- Object labels with name, type, and strength
+- Interactive legend explaining markers
+- Statistics tracking (found %, by type)
+
+#### UIControls.js (Week 4)
+DOM-based UI control management:
+- Creates and manages top control bar
+- Creates and manages bottom status bar
+- Creates score modal for end-of-scenario results
+- Handles all UI event listeners
+- Updates status in real-time
+- Professional animations and transitions
 
 #### AudioEngine.js (Week 3)
 Realistic metal detector audio simulation:
@@ -211,16 +299,26 @@ Enhanced signal output:
 - ✅ **Week 1**: Core heat map + detector position
 - ✅ **Week 2**: Metal type discrimination + coverage tracking
 - ✅ **Week 3**: Audio engine + metrics panel + signal analysis + technique feedback
-- 🎯 **Week 4**: Scenarios + scoring + ground truth (planned)
+- ✅ **Week 4**: Scenarios + scoring system + ground truth visualization + UI controls
 
-## Next Steps (Week 4)
+## All Features Complete! 🎉
 
-- [ ] Pre-defined training scenarios (beginner, intermediate, advanced)
-- [ ] Scoring system (targets found, false alarms, efficiency)
-- [ ] Ground truth visualization toggle
-- [ ] Scenario selector and settings panel
-- [ ] Performance tracking and export results
-- [ ] Final UI polish and documentation
+The metal detector training simulator is now feature-complete with:
+- 5 training scenarios with varying difficulty levels
+- Comprehensive scoring and performance tracking
+- Realistic audio simulation
+- Real-time metrics and technique feedback
+- Ground truth visualization for learning
+- Professional UI with control/status bars
+- Export functionality for results
+
+### Possible Future Enhancements
+- Additional scenarios and custom scenario editor
+- Multiplayer/leaderboard system
+- Mobile touch optimization
+- More metal types (brass, titanium, etc.)
+- Adjustable difficulty settings (mineralization, depth simulation)
+- Training mode with guided tutorials
 
 ## Browser Compatibility
 
@@ -268,5 +366,5 @@ Educational use for MIT Build for Ukraine 2026.
 
 ---
 
-**Last Updated**: Week 3 Complete - Audio Engine, Metrics Panel, Signal & Technique Analysis
-**Next Milestone**: Week 4 - Training Scenarios, Scoring System & Ground Truth
+**Last Updated**: Week 4 Complete - Full Training System with Scenarios, Scoring & Ground Truth ✅
+**Status**: All planned features implemented - Simulator ready for deployment and use!

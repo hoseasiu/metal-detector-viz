@@ -13,6 +13,10 @@ import { AudioEngine } from './js/AudioEngine.js';
 import { MetricsPanel } from './js/MetricsPanel.js';
 import { SignalAnalyzer } from './js/SignalAnalyzer.js';
 import { TechniqueAnalyzer } from './js/TechniqueAnalyzer.js';
+import { ScenarioManager } from './js/ScenarioManager.js';
+import { ScoringSystem } from './js/ScoringSystem.js';
+import { GroundTruth } from './js/GroundTruth.js';
+import { UIControls } from './js/UIControls.js';
 
 // Global variables for P5.js
 let detectorSim;
@@ -26,6 +30,12 @@ let audioEngine;
 let metricsPanel;
 let signalAnalyzer;
 let techniqueAnalyzer;
+
+// Week 4 components
+let scenarioManager;
+let scoringSystem;
+let groundTruth;
+let uiControls;
 
 /**
  * P5.js setup function - runs once at start
@@ -51,26 +61,33 @@ window.setup = function() {
     signalAnalyzer = new SignalAnalyzer();
     techniqueAnalyzer = new TechniqueAnalyzer();
 
+    // Initialize Week 4 components
+    scenarioManager = new ScenarioManager();
+    scoringSystem = new ScoringSystem();
+    groundTruth = new GroundTruth(window);
+    uiControls = new UIControls();
+
     // Set initial detector position to center
     detectorRenderer.updatePosition(CANVAS.WIDTH / 2, CANVAS.HEIGHT / 2);
+
+    // Load default scenario
+    loadScenario('default');
 
     // Wire up audio controls
     setupAudioControls();
 
+    // Wire up UI controls
+    setupUIControls();
+
     console.log('Metal Detector Visualization initialized');
     console.log(`Canvas: ${CANVAS.WIDTH}x${CANVAS.HEIGHT}`);
-    console.log(`Buried objects: ${BURIED_OBJECTS.length}`);
-    console.log('Week 3 Features: Audio engine, metrics panel, signal analysis, technique feedback');
+    console.log('Week 4 Features: Scenarios, scoring system, ground truth visualization');
     console.log('Controls:');
-    console.log('  R - Reset heat map and coverage');
+    console.log('  R - Reset scenario');
+    console.log('  T - Toggle ground truth');
     console.log('  L - Toggle legend');
-    console.log('  D - Toggle debug/ground truth');
-    console.log('  M - Toggle heat map mode (fading/permanent)');
-    console.log('  C - Toggle metal type colors');
-    console.log('  G - Toggle grid overlay');
-    console.log('  V - Toggle value display');
-    console.log('  F - Toggle FPS display');
-    console.log('  A - Toggle audio (or use button in metrics panel)');
+    console.log('  M - Toggle heat map mode');
+    console.log('  A - Toggle audio');
 };
 
 /**
@@ -129,15 +146,18 @@ window.draw = function() {
     // 3. Heat map (middle layer - shows signal strength with metal type colors)
     heatMapRenderer.render();
     
-    // 4. Debug: Show buried object locations (if enabled)
-    if (DEBUG.SHOW_OBJECT_LOCATIONS) {
+    // 4. Ground truth: Show buried object locations (Week 4)
+    groundTruth.render();
+
+    // 5. Debug: Show buried object locations (if enabled - legacy)
+    if (DEBUG.SHOW_OBJECT_LOCATIONS && !groundTruth.visible) {
         renderBuriedObjects();
     }
-    
-    // 5. Detector position (top layer)
+
+    // 6. Detector position (top layer)
     detectorRenderer.render(signal.strength);
-    
-    // 6. Legend (overlay)
+
+    // 7. Legend (overlay)
     legend.render();
     
     // 7. Value display (if enabled)
@@ -159,7 +179,7 @@ window.draw = function() {
         });
     }
     
-    // 7. Week 3: Update metrics panel with current data
+    // 8. Week 3: Update metrics panel with current data
     const analysisResults = signalAnalyzer.getAnalysis();
     const techniqueReport = techniqueAnalyzer.getReport();
 
@@ -176,6 +196,41 @@ window.draw = function() {
 
     // Update technique feedback in metrics panel
     metricsPanel.updateTechniqueFeedback(techniqueReport.feedback);
+
+    // 9. Week 4: Update scoring system
+    if (scoringSystem) {
+        scoringSystem.updateCoverage(coverageRenderer.getCoveragePercentage());
+        scoringSystem.updateTechnique(techniqueReport);
+        scoringSystem.updateSignalConfidence(analysisResults.confidence);
+
+        // Check if target found (strong signal on target location)
+        if (signal.closestObject && signal.strength > 60) {
+            scoringSystem.recordTargetFound(signal.closestObject, analysisResults.confidence);
+            groundTruth.markAsFound(signal.closestObject);
+        }
+
+        // Update status bar
+        const scoreReport = scoringSystem.getReport();
+        const scenario = scenarioManager.getCurrentScenario();
+
+        if (scenario) {
+            uiControls.updateStatus({
+                scenarioName: scenario.name,
+                targetsFound: scoreReport.targetsFound,
+                totalTargets: scoreReport.totalTargets,
+                score: scoringSystem.calculateFinalScore(),
+                time: scoreReport.timeRemaining !== null
+                    ? ScoringSystem.formatTime(scoreReport.timeRemaining)
+                    : scoreReport.timeElapsedFormatted,
+                showFinish: scenarioManager.hasScoring() && !scoreReport.complete
+            });
+
+            // Check for scenario completion
+            if (scoreReport.timeExpired && !scoreReport.complete) {
+                endScenario();
+            }
+        }
+    }
 
     // 8. Update debug panel if available (for debug.html)
     if (typeof window.updateDebugPanel === 'function') {
@@ -294,6 +349,122 @@ window.windowResized = function() {
 };
 
 /**
+ * Load a scenario
+ * @param {string} scenarioName - Scenario name
+ */
+function loadScenario(scenarioName) {
+    if (!scenarioManager.loadScenario(scenarioName)) {
+        console.error('Failed to load scenario:', scenarioName);
+        return;
+    }
+
+    // Get scenario objects and update detector simulator
+    const objects = scenarioManager.getObjects();
+    detectorSim.objects = objects;
+
+    // Update ground truth
+    groundTruth.setObjects(objects);
+    groundTruth.reset();
+
+    // Initialize scoring if scenario has scoring
+    if (scenarioManager.hasScoring()) {
+        const valuableCount = scenarioManager.getValuableTargetCount();
+        const trashCount = scenarioManager.getTrashCount();
+        const timeLimit = scenarioManager.getTimeLimit();
+
+        scoringSystem.initializeScenario(
+            scenarioManager.getTargetCount(),
+            valuableCount,
+            trashCount,
+            timeLimit
+        );
+    }
+
+    // Reset all renderers and analyzers
+    heatMapRenderer.clear();
+    coverageRenderer.reset();
+    detectorRenderer.clearTrail();
+    signalAnalyzer.reset();
+    techniqueAnalyzer.reset();
+    metricsPanel.reset();
+
+    console.log(`Scenario loaded: ${scenarioManager.getCurrentScenario().name}`);
+}
+
+/**
+ * Reset current scenario
+ */
+function resetScenario() {
+    const currentScenarioName = scenarioManager.getCurrentScenarioName();
+    if (currentScenarioName) {
+        loadScenario(currentScenarioName);
+    }
+}
+
+/**
+ * End scenario and show results
+ */
+function endScenario() {
+    if (!scoringSystem.scenarioComplete) {
+        const passingScore = scenarioManager.getPassingScore();
+        scoringSystem.endScenario(passingScore);
+
+        // Show score modal
+        const scoreReport = scoringSystem.getReport();
+        uiControls.showScoreModal(scoreReport);
+
+        console.log('Scenario ended:', scoreReport);
+    }
+}
+
+/**
+ * Export results as JSON
+ */
+function exportResults() {
+    const results = scoringSystem.exportResults();
+    const blob = new Blob([results], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `metal-detector-results-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    console.log('Results exported');
+}
+
+/**
+ * Setup UI control event listeners
+ */
+function setupUIControls() {
+    // Scenario change
+    uiControls.onScenarioChange = (scenarioName) => {
+        loadScenario(scenarioName);
+    };
+
+    // Reset button
+    uiControls.onReset = () => {
+        resetScenario();
+    };
+
+    // Ground truth toggle
+    uiControls.onGroundTruthToggle = () => {
+        groundTruth.toggle();
+        uiControls.updateGroundTruthButton(groundTruth.visible);
+    };
+
+    // Finish button
+    uiControls.onFinish = () => {
+        endScenario();
+    };
+
+    // Export button
+    uiControls.onExport = () => {
+        exportResults();
+    };
+}
+
+/**
  * Setup audio control event listeners
  */
 function setupAudioControls() {
@@ -365,7 +536,14 @@ window.keyPressed = function() {
         console.log('Legend:', legend.isVisible() ? 'VISIBLE' : 'HIDDEN');
     }
     
-    // 'D' key - Toggle debug mode
+    // 'T' key - Toggle ground truth (Week 4)
+    if (key === 't' || key === 'T') {
+        groundTruth.toggle();
+        uiControls.updateGroundTruthButton(groundTruth.visible);
+        console.log('Ground truth:', groundTruth.visible ? 'VISIBLE' : 'HIDDEN');
+    }
+
+    // 'D' key - Toggle debug mode (legacy)
     if (key === 'd' || key === 'D') {
         DEBUG.SHOW_OBJECT_LOCATIONS = !DEBUG.SHOW_OBJECT_LOCATIONS;
         console.log('Debug mode:', DEBUG.SHOW_OBJECT_LOCATIONS ? 'ON' : 'OFF');
