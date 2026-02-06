@@ -79,15 +79,8 @@ window.setup = function() {
     // Wire up UI controls
     setupUIControls();
 
-    console.log('Metal Detector Visualization initialized');
-    console.log(`Canvas: ${CANVAS.WIDTH}x${CANVAS.HEIGHT}`);
-    console.log('Week 4 Features: Scenarios, scoring system, ground truth visualization');
-    console.log('Controls:');
-    console.log('  R - Reset scenario');
-    console.log('  T - Toggle ground truth');
-    console.log('  L - Toggle legend');
-    console.log('  M - Toggle heat map mode');
-    console.log('  A - Toggle audio');
+    console.log('Metal Detector Simulator initialized');
+    console.log(`Canvas: ${CANVAS.WIDTH}x${CANVAS.HEIGHT} | Controls: R-Reset T-Ground Truth L-Legend A-Audio`);
 };
 
 /**
@@ -388,7 +381,6 @@ function loadScenario(scenarioName) {
     techniqueAnalyzer.reset();
     metricsPanel.reset();
 
-    console.log(`Scenario loaded: ${scenarioManager.getCurrentScenario().name}`);
 }
 
 /**
@@ -413,7 +405,6 @@ function endScenario() {
         const scoreReport = scoringSystem.getReport();
         uiControls.showScoreModal(scoreReport);
 
-        console.log('Scenario ended:', scoreReport);
     }
 }
 
@@ -512,7 +503,7 @@ function setupAudioControls() {
  * Handle key presses for controls
  */
 window.keyPressed = function() {
-    // 'R' key - Reset heat map and coverage
+    // 'R' key - Reset scenario
     if (key === 'r' || key === 'R') {
         heatMapRenderer.clear();
         detectorRenderer.clearTrail();
@@ -520,62 +511,53 @@ window.keyPressed = function() {
         metricsPanel.reset();
         signalAnalyzer.reset();
         techniqueAnalyzer.reset();
-        console.log('All systems reset');
     }
 
     // 'A' key - Toggle audio
     if (key === 'a' || key === 'A') {
         const enabled = audioEngine.toggle();
         metricsPanel.updateAudioStatus(enabled);
-        console.log('Audio:', enabled ? 'ON' : 'OFF');
     }
-    
+
     // 'L' key - Toggle legend
     if (key === 'l' || key === 'L') {
         legend.toggle();
-        console.log('Legend:', legend.isVisible() ? 'VISIBLE' : 'HIDDEN');
     }
-    
-    // 'T' key - Toggle ground truth (Week 4)
+
+    // 'T' key - Toggle ground truth
     if (key === 't' || key === 'T') {
         groundTruth.toggle();
         uiControls.updateGroundTruthButton(groundTruth.visible);
-        console.log('Ground truth:', groundTruth.visible ? 'VISIBLE' : 'HIDDEN');
     }
 
-    // 'D' key - Toggle debug mode (legacy)
+    // 'D' key - Toggle debug mode
     if (key === 'd' || key === 'D') {
         DEBUG.SHOW_OBJECT_LOCATIONS = !DEBUG.SHOW_OBJECT_LOCATIONS;
-        console.log('Debug mode:', DEBUG.SHOW_OBJECT_LOCATIONS ? 'ON' : 'OFF');
     }
-    
+
     // 'F' key - Toggle FPS display
     if (key === 'f' || key === 'F') {
         DEBUG.SHOW_FPS = !DEBUG.SHOW_FPS;
     }
-    
-    // 'M' key - Toggle decay mode (permanent vs fading heat map)
+
+    // 'M' key - Toggle heat map decay mode
     if (key === 'm' || key === 'M') {
         SIGNAL.ENABLE_DECAY = !SIGNAL.ENABLE_DECAY;
-        console.log('Heat map mode:', SIGNAL.ENABLE_DECAY ? 'FADING' : 'PERMANENT');
     }
-    
+
     // 'C' key - Toggle metal type colors
     if (key === 'c' || key === 'C') {
         heatMapRenderer.useMetalTypeColors = !heatMapRenderer.useMetalTypeColors;
-        console.log('Metal type colors:', heatMapRenderer.useMetalTypeColors ? 'ON' : 'OFF');
     }
-    
+
     // 'G' key - Toggle grid overlay
     if (key === 'g' || key === 'G') {
         DEBUG.SHOW_GRID = !DEBUG.SHOW_GRID;
-        console.log('Grid overlay:', DEBUG.SHOW_GRID ? 'ON' : 'OFF');
     }
-    
+
     // 'V' key - Toggle value display
     if (key === 'v' || key === 'V') {
         DEBUG.SHOW_VALUES = !DEBUG.SHOW_VALUES;
-        console.log('Value display:', DEBUG.SHOW_VALUES ? 'ON' : 'OFF');
     }
     
     // Space bar - Clear trail
