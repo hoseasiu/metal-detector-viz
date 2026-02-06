@@ -9,6 +9,10 @@ import { HeatMapRenderer } from './js/HeatMapRenderer.js';
 import { DetectorRenderer } from './js/DetectorRenderer.js';
 import { CoverageRenderer } from './js/CoverageRenderer.js';
 import { Legend } from './js/Legend.js';
+import { AudioEngine } from './js/AudioEngine.js';
+import { MetricsPanel } from './js/MetricsPanel.js';
+import { SignalAnalyzer } from './js/SignalAnalyzer.js';
+import { TechniqueAnalyzer } from './js/TechniqueAnalyzer.js';
 
 // Global variables for P5.js
 let detectorSim;
@@ -17,6 +21,12 @@ let detectorRenderer;
 let coverageRenderer;
 let legend;
 
+// Week 3 components
+let audioEngine;
+let metricsPanel;
+let signalAnalyzer;
+let techniqueAnalyzer;
+
 /**
  * P5.js setup function - runs once at start
  */
@@ -24,24 +34,33 @@ window.setup = function() {
     // Create canvas and attach to container
     const canvas = createCanvas(CANVAS.WIDTH, CANVAS.HEIGHT);
     canvas.parent('canvas-container');
-    
+
     // Set frame rate
     frameRate(PERFORMANCE.FRAME_RATE);
-    
-    // Initialize components
+
+    // Initialize core components
     detectorSim = new DetectorSimulator();
     heatMapRenderer = new HeatMapRenderer(window);
     detectorRenderer = new DetectorRenderer(window);
     coverageRenderer = new CoverageRenderer();
     legend = new Legend(window);
-    
+
+    // Initialize Week 3 components
+    audioEngine = new AudioEngine();
+    metricsPanel = new MetricsPanel();
+    signalAnalyzer = new SignalAnalyzer();
+    techniqueAnalyzer = new TechniqueAnalyzer();
+
     // Set initial detector position to center
     detectorRenderer.updatePosition(CANVAS.WIDTH / 2, CANVAS.HEIGHT / 2);
-    
+
+    // Wire up audio controls
+    setupAudioControls();
+
     console.log('Metal Detector Visualization initialized');
     console.log(`Canvas: ${CANVAS.WIDTH}x${CANVAS.HEIGHT}`);
     console.log(`Buried objects: ${BURIED_OBJECTS.length}`);
-    console.log('Week 2 Features: Metal type discrimination, coverage tracking, legend');
+    console.log('Week 3 Features: Audio engine, metrics panel, signal analysis, technique feedback');
     console.log('Controls:');
     console.log('  R - Reset heat map and coverage');
     console.log('  L - Toggle legend');
@@ -51,6 +70,7 @@ window.setup = function() {
     console.log('  G - Toggle grid overlay');
     console.log('  V - Toggle value display');
     console.log('  F - Toggle FPS display');
+    console.log('  A - Toggle audio (or use button in metrics panel)');
 };
 
 /**
@@ -59,32 +79,41 @@ window.setup = function() {
 window.draw = function() {
     // Clear background
     background(CANVAS.BACKGROUND_COLOR);
-    
+
     // Get current mouse/touch position
     let detectorX = mouseX;
     let detectorY = mouseY;
-    
+
     // Clamp to canvas bounds
     detectorX = constrain(detectorX, 0, CANVAS.WIDTH);
     detectorY = constrain(detectorY, 0, CANVAS.HEIGHT);
-    
+
     // Get signal at current position
     const signal = detectorSim.getSignal(detectorX, detectorY);
-    
+
     // Update components
     if (mouseX >= 0 && mouseX <= CANVAS.WIDTH && mouseY >= 0 && mouseY <= CANVAS.HEIGHT) {
         // Only update if mouse is over canvas
-        
+
         // Update coverage tracker
         coverageRenderer.update(detectorX, detectorY, DETECTOR.RADIUS);
-        
+
         // Update heat map with metal type information
         heatMapRenderer.update(detectorX, detectorY, signal.strength, signal.metalType);
-        
+
         // Update detector position
         detectorRenderer.updatePosition(detectorX, detectorY);
+
+        // Week 3: Update analyzers
+        signalAnalyzer.update(signal);
+        techniqueAnalyzer.update(detectorX, detectorY);
+
+        // Week 3: Update audio engine
+        if (signal.vdi && signal.strength) {
+            audioEngine.update(signal.vdi, signal.strength);
+        }
     }
-    
+
     // Apply decay to heat map
     heatMapRenderer.decay();
     
@@ -130,14 +159,32 @@ window.draw = function() {
         });
     }
     
-    // 7. Update debug panel if available (for debug.html)
+    // 7. Week 3: Update metrics panel with current data
+    const analysisResults = signalAnalyzer.getAnalysis();
+    const techniqueReport = techniqueAnalyzer.getReport();
+
+    metricsPanel.update({
+        strength: signal.strength,
+        vdi: signal.vdi,
+        phase: signal.phase,
+        frequency: signal.frequency,
+        distance: signal.distance,
+        metalType: signal.metalType,
+        closestObject: signal.closestObject,
+        coverage: coverageRenderer.getCoveragePercentage().toFixed(1)
+    });
+
+    // Update technique feedback in metrics panel
+    metricsPanel.updateTechniqueFeedback(techniqueReport.feedback);
+
+    // 8. Update debug panel if available (for debug.html)
     if (typeof window.updateDebugPanel === 'function') {
         const gridX = Math.floor(detectorX / 10);
         const gridY = Math.floor(detectorY / 10);
-        const heatMapValue = (gridX >= 0 && gridX < 80 && gridY >= 0 && gridY < 60) 
-            ? heatMapRenderer.grid[gridX][gridY] 
+        const heatMapValue = (gridX >= 0 && gridX < 80 && gridY >= 0 && gridY < 60)
+            ? heatMapRenderer.grid[gridX][gridY]
             : 0;
-        
+
         window.updateDebugPanel({
             x: Math.floor(detectorX),
             y: Math.floor(detectorY),
@@ -247,6 +294,50 @@ window.windowResized = function() {
 };
 
 /**
+ * Setup audio control event listeners
+ */
+function setupAudioControls() {
+    // Audio toggle button
+    const audioToggleBtn = document.getElementById('audio-toggle-btn');
+    if (audioToggleBtn) {
+        audioToggleBtn.addEventListener('click', () => {
+            const enabled = audioEngine.toggle();
+            metricsPanel.updateAudioStatus(enabled);
+        });
+    }
+
+    // Volume slider
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    if (volumeSlider && volumeValue) {
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = parseInt(e.target.value) / 100;
+            audioEngine.setVolume(volume);
+            volumeValue.textContent = `${e.target.value}%`;
+        });
+    }
+
+    // Tone system selector
+    const toneSystemSelect = document.getElementById('tone-system');
+    if (toneSystemSelect) {
+        toneSystemSelect.addEventListener('change', (e) => {
+            const tones = parseInt(e.target.value);
+            audioEngine.setToneSystem(tones);
+            console.log(`Tone system changed to ${tones}-tone`);
+        });
+    }
+
+    // Audio mode selector
+    const audioModeSelect = document.getElementById('audio-mode');
+    if (audioModeSelect) {
+        audioModeSelect.addEventListener('change', (e) => {
+            audioEngine.setMode(e.target.value);
+            console.log(`Audio mode changed to ${e.target.value}`);
+        });
+    }
+}
+
+/**
  * Handle key presses for controls
  */
 window.keyPressed = function() {
@@ -255,7 +346,17 @@ window.keyPressed = function() {
         heatMapRenderer.clear();
         detectorRenderer.clearTrail();
         coverageRenderer.reset();
-        console.log('Heat map and coverage cleared');
+        metricsPanel.reset();
+        signalAnalyzer.reset();
+        techniqueAnalyzer.reset();
+        console.log('All systems reset');
+    }
+
+    // 'A' key - Toggle audio
+    if (key === 'a' || key === 'A') {
+        const enabled = audioEngine.toggle();
+        metricsPanel.updateAudioStatus(enabled);
+        console.log('Audio:', enabled ? 'ON' : 'OFF');
     }
     
     // 'L' key - Toggle legend

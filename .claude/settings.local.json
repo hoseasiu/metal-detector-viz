@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(timeout:*)",
+      "Bash(NUL)",
+      "Bash(python -m http.server:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -10,24 +10,31 @@
 
 ## Priority Feature Request: Audio Simulation
 
-**IMPORTANT:** Add realistic metal detector audio tones using the Web Audio API. Based on research, metal detectors produce:
+**IMPORTANT:** Mimic realistic metal detector audio behavior using the Web Audio API. Real metal detectors (Garrett, Minelab, etc.) use discrete beeping patterns, not continuous tones:
 
-- **Low tones (100-300 Hz)**: Iron/ferrous metals, low conductivity (VDI 0-30, phase shift <80°)
-- **Mid tones (300-600 Hz)**: Aluminum, pull tabs, medium conductivity (VDI 35-60, phase shift 80-160°)
-- **High tones (600-900+ Hz)**: Silver, copper, high conductivity (VDI 80-99, phase shift >160°)
+### Audio Modes
+- **Silent Search (Beep Mode)**: Default mode - silent until target detected, then produces repeating beeps
+- **Threshold Mode**: Optional continuous background hum (75-200 Hz) with pitch variations for subtle targets
 
-Key audio characteristics:
-- **Volume**: Increases as detector gets closer to target (louder = shallower/closer)
-- **Pitch**: Changes based on metal type AND proximity
-- **Quality**: "Clean, musical tones" for valuable targets vs "choppy, broken tones" for trash
-- **Response**: Sharp onset, steady hold, clean cutoff for coins; erratic for junk
+### Beep Characteristics (mimicking Garrett AT Pro, Minelab Equinox behavior)
+- **Iron/Ferrous (VDI 0-30)**: Low-pitched "grunt" beeps (100-250 Hz), shorter duration
+- **Aluminum/Pull tabs (VDI 35-60)**: Mid-pitched beeps (300-500 Hz), medium duration
+- **Copper/Brass (VDI 60-75)**: Higher beeps (500-700 Hz), clean tone
+- **Silver/Coins (VDI 80-99)**: High-pitched beeps (700-900 Hz), clear and distinct
 
-This should be implemented as an optional feature (toggle on/off) and will significantly enhance training realism.
+### Realistic Audio Behavior
+- **Beep repetition rate**: Increases as signal strength increases (weak: 1-2 beeps/sec, strong: 4-6 beeps/sec)
+- **Volume**: Gets louder as detector approaches target center (mimics real detector behavior)
+- **Beep envelope**: Quick attack (5-10ms), brief sustain (50-150ms depending on signal), quick release (20-30ms)
+- **Multi-tone system**: Use 3-4 discrete tone bins (like Garrett 3-tone or Minelab 4-tone), not continuous pitch variation
+- **Overlap handling**: Stop previous beep when new one starts (prevents muddy audio)
+
+This mimics real detector audio patterns that experienced users rely on for target identification.
 
 **Recommended Implementation Schedule:**
-- Week 2-3: Basic tone generation tied to signal strength
-- Week 3-4: Metal-type-specific tones and audio quality characteristics
-- Week 4: Polish audio response, add mute/volume controls
+- Week 2-3: Basic beep generation with repetition rate tied to signal strength
+- Week 3-4: Multi-tone system with VDI-based pitch selection, volume modulation
+- Week 4: Optional threshold mode, mute/volume controls, audio settings panel
 
 ---
 
@@ -292,29 +299,37 @@ If time permits in Week 2, start basic audio:
 - Provide real-time tips
 
 #### Task 3.5: Complete AudioEngine.js (3-4 hours)
-- Multi-tone capability for different metal types
-- Implement "clean, musical" tones for valuable metals
-- Implement "choppy, broken" tones for trash
-- Volume envelope (sharp attack, steady sustain, quick release)
-- Add slight frequency modulation for realism
-- Implement mute/unmute toggle
-- Volume slider control
-- Audio quality settings (low/medium/high fidelity)
+Implement realistic metal detector beeping behavior:
+- **Beep generation system**: Discrete beeps (not continuous tones) triggered at intervals
+- **Multi-tone bins**: 3-4 frequency bins mapped to VDI ranges (mimics Garrett/Minelab)
+- **Dynamic beep rate**: Adjust repetition rate based on signal strength (1-6 beeps/sec)
+- **Volume modulation**: Scale beep volume by signal strength
+- **Beep overlap prevention**: Cancel previous beep when starting new one
+- **Mute/unmute toggle** and volume slider control
+- **Optional threshold mode**: Continuous low hum with pitch variations
 
-**Audio characteristics:**
+**Beep implementation pattern:**
 ```javascript
-// Clean tone (silver/copper)
-- Smooth sine wave
-- Sharp attack (5ms)
-- Steady sustain
-- Quick release (20ms)
-- Stable frequency
+// Beep tone generator (mimicking real detector behavior)
+class BeepGenerator {
+  generateBeep(vdi, signalStrength) {
+    // Select frequency bin based on VDI (3-tone system)
+    const freq = this.getFrequencyForVDI(vdi);
+    // Iron: 100-250 Hz, Aluminum: 300-500 Hz, Coins: 700-900 Hz
 
-// Trash tone (iron/junk)
-- Add noise/distortion
-- Erratic frequency variations
-- Inconsistent amplitude
-- Crackling/popping effects
+    // Calculate beep timing
+    const beepRate = 1 + (signalStrength / 20); // 1-6 beeps/sec
+    const beepDuration = 50 + (signalStrength * 1); // 50-150ms
+
+    // Beep envelope
+    - Attack: 5-10ms (quick onset)
+    - Sustain: beepDuration
+    - Release: 20-30ms (quick cutoff)
+
+    // Volume scaled by signal strength
+    const volume = signalStrength / 100;
+  }
+}
 ```
 
 ### End of Week 3 Deliverables
@@ -322,9 +337,9 @@ If time permits in Week 2, start basic audio:
 ✅ Signal analyzer evaluates signal quality
 ✅ Technique feedback helps user improve
 ✅ Responsive layout works on mobile
-✅ **Complete audio system with realistic metal detector tones**
-✅ Audio quality matches metal type (clean vs choppy)
-✅ Volume and pitch respond correctly to proximity
+✅ **Complete audio system with realistic beeping behavior**
+✅ Multi-tone beep system mimics real detectors (Garrett/Minelab style)
+✅ Beep rate and volume respond correctly to signal strength and proximity
 
 ### Testing Criteria
 - [ ] Metrics update smoothly without lag
@@ -504,36 +519,71 @@ metal-detector-viz/
 
 ## Audio Implementation Details
 
-### Web Audio API Setup
+### Web Audio API Setup (Realistic Beeping Behavior)
 ```javascript
-// AudioEngine.js architecture
+// AudioEngine.js architecture - mimics real metal detectors
 class AudioEngine {
   constructor() {
     this.audioContext = null;
-    this.oscillator = null;
-    this.gainNode = null;
     this.enabled = false;
+    this.mode = 'beep'; // 'beep' or 'threshold'
+    this.beepTimer = null;
+    this.currentBeep = null;
+    this.lastSignalStrength = 0;
   }
-  
+
   init() {
     // Initialize audio context (must be triggered by user action)
     this.audioContext = new AudioContext();
-    this.setupNodes();
   }
-  
-  generateTone(metalType, strength, distance) {
-    // Calculate frequency based on metal type
-    // Adjust volume based on strength and distance
-    // Apply envelope for realistic response
+
+  update(vdi, signalStrength) {
+    if (signalStrength > 5) {
+      // Calculate beep rate based on signal strength
+      const beepInterval = 1000 / (1 + signalStrength / 20); // 1-6 beeps/sec
+
+      if (this.mode === 'beep') {
+        this.scheduleBeep(vdi, signalStrength, beepInterval);
+      } else {
+        this.updateThresholdTone(signalStrength);
+      }
+    } else {
+      this.stopBeeping();
+    }
+  }
+
+  scheduleBeep(vdi, strength, interval) {
+    // Stop previous beep if still playing
+    if (this.currentBeep) this.currentBeep.stop();
+
+    // Generate single beep
+    const freq = this.getFrequencyBin(vdi); // 3-tone system
+    const duration = 50 + strength; // 50-150ms
+    const volume = strength / 100;
+
+    this.playBeep(freq, duration, volume);
+  }
+
+  getFrequencyBin(vdi) {
+    // 3-tone system mimicking Garrett AT Pro
+    if (vdi < 30) return 150;  // Iron: low grunt
+    if (vdi < 60) return 400;  // Aluminum: mid tone
+    return 800;                 // Coins/silver: high tone
   }
 }
 ```
 
-### Tone Specifications
-- **Iron**: 100-300 Hz, add noise, erratic envelope
-- **Aluminum**: 300-450 Hz, slight distortion
-- **Copper**: 500-700 Hz, clean sine wave
-- **Silver**: 750-900 Hz, very clean, musical quality
+### Beep Specifications (Multi-Tone System)
+Mimics Garrett AT Pro 3-tone and Minelab Equinox 4-tone systems:
+- **Iron/Ferrous (VDI 0-30)**: 100-250 Hz low grunt, 50-80ms duration
+- **Aluminum/Pull tabs (VDI 35-60)**: 300-500 Hz mid tone, 80-120ms duration
+- **Copper/Brass (VDI 60-75)**: 500-700 Hz higher tone, 100-130ms duration
+- **Silver/Coins (VDI 80-99)**: 700-900 Hz high clear tone, 120-150ms duration
+
+### Beep Timing and Volume
+- **Beep rate**: 1 beep/sec (weak signal) → 6 beeps/sec (strong signal)
+- **Volume**: Scales linearly with signal strength (0-100%)
+- **Envelope**: Attack 5-10ms, Sustain varies by strength, Release 20-30ms
 
 ---
 
@@ -579,9 +629,16 @@ class AudioEngine {
 - Color Theory: Thermal gradients, accessibility
 
 ### Audio Research
-- Detector tone ranges: Low (100-300 Hz), Mid (300-600 Hz), High (600-900+ Hz)
-- VDI-to-tone mapping from actual metal detectors
-- Signal quality characteristics (clean vs choppy)
+Based on real metal detector behavior (Garrett AT Pro, Minelab Equinox, etc.):
+- **Beep mode**: Discrete repeating beeps (1-6 beeps/sec based on signal strength)
+- **Tone bins**: 3-4 discrete frequencies mapped to VDI ranges (not continuous pitch)
+  - Iron: 100-250 Hz low grunt
+  - Aluminum: 300-500 Hz mid tone
+  - Copper: 500-700 Hz higher tone
+  - Silver/Coins: 700-900 Hz high clear tone
+- **Threshold mode**: Optional continuous background hum (75-200 Hz) with pitch variations
+- **Volume behavior**: Increases as detector approaches target center
+- **Beep timing**: Quick attack (5-10ms), brief sustain (50-150ms), quick release (20-30ms)
 
 ### Example Scenarios
 - **Beginner:** Single shallow target, no clutter
