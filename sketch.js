@@ -3,7 +3,7 @@
  * Integrates all components and handles the main draw loop
  */
 
-import { CANVAS, PERFORMANCE, DEBUG, BURIED_OBJECTS, SIGNAL, DETECTOR } from './js/config.js';
+import { CANVAS, PERFORMANCE, DEBUG, BURIED_OBJECTS, SIGNAL, DETECTOR, GRID } from './js/config.js';
 import { DetectorSimulator } from './js/DetectorSimulator.js';
 import { HeatMapRenderer } from './js/HeatMapRenderer.js';
 import { DetectorRenderer } from './js/DetectorRenderer.js';
